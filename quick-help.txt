@@ -1,0 +1,50 @@
+apt-get update
+sudo apt-get install software-properties-common
+apt-get install rsyslog -y
+
+
+Montaje del volumen
+docker run -ti -v "C:\Users\Carlos M\code\sandas\files":/var/logs/sandas sandas /bin/bash
+
+copia de  los archivos de configuracion
+rsyslog.conf
+sandas.conf
+
+reinicio del servicio
+service rsyslog start
+
+
+
+Borrar una imagen docker
+docker rmi image_name
+
+
+
+# Entorno sandas
+
+python3 getevents.py -ip 192.168.200.2 -u user -p password &
+
+1) Creación de la imagen
+
+sudo docker build -t sandas:v1 .
+
+2) Ejecución de la imagen, notese como arranco en modo interactivo, el CMD del docker file tras arrancar cron y rsyslog arranca una shell por eso no se puede cargar en modo daemon, en el script de Dockerfile esta comentado como hacerlo
+
+sudo docker run -ti -v /home/c.munoz/code/files/:/mnt/esmfiles sandas:v1
+
+3) sudo docker attach docker_ID
+
+Ctrl+P + Ctrl+Q para salir
+
+
+Utilidades
+
+Check the log file exits
+docker exec bd /bin/bash -c "ls /var/logs/sandas"
+
+Check the processes
+docker exec bd /bin/bash -c "ps aux"
+
+Check that the service is running
+docker exec bd /bin/bash -c "service rsyslog status"
+

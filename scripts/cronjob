@@ -1,0 +1,2 @@
+0 1 * * * root /root/rotate.sh >> /var/log/cron.log 
+*/10 * * * * root /root/monitorsyslog.sh >> /var/log/cron.log 

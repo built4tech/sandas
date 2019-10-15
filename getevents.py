@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 
 # GLOBALS SECTION
-QUERY_DELAY = 300 # Every 5 minutes
+QUERY_DELAY = 600 # Every 10 minutes
 HEARBEAT = 120 # Every two minutes
 logFile=os.curdir + os.sep + 'log' + os.sep + 'observer.log'
 logger = ""
@@ -205,7 +205,7 @@ class McAfee_SIEM():
 			r = r.json()
 			return (1, r['resultID'])
 		else:
-			print("Debug - ESM query error", r.text )		
+			#print("Debug - ESM query error", r.text )		
 			error_info = "ESM query error, Status Code: %d"%r.status_code
 			return(0, error_info)			
 
@@ -369,11 +369,15 @@ def parseargs():
 	arg_help = "Password for ESM"
 	atd_group.add_argument('-p', required=True, default = "", action='store', dest='esm_password', help=arg_help, metavar="")
 
+	arg_help = "Connection period"
+	atd_group.add_argument('-t', required=False, type=int, default = 600, action='store', dest='time_interval', help=arg_help, metavar="")
+
 	parser.add_argument('--version', action='version', version='Carlos Munoz (carlos?munozgarrido@mcafee.com)\n%(prog)s 1.0 (10/04/2019)')
 
 	return parser.parse_args()
 
 def main():
+	global QUERY_DELAY
 
 	# get script parameters
 	option = parseargs()
@@ -382,19 +386,22 @@ def main():
 	Utils.log_setup()
 	logger.info('Logger initialized')
 
-	# Creación de carpeta para el almacenamiento de los logs
+	# Creacion de carpeta para el almacenamiento de los logs
 	Utils.files_setup()
-	print("Debug - File maintenance done")
+	#print("Debug - File maintenance done")
 	logger.info("File maintenance done")
+
+	# Estableciendo intervalo de tiempo de conexion
+	QUERY_DELAY = option.time_interval
 
 	esm = McAfee_SIEM(option.esm_ipaddress)
 	status, info = esm.connect(option.esm_username, option.esm_password)
 
 	if status:
-		print("Debug - Connection stablished")
+		#print("Debug - Connection stablished")
 		logger.info(info)
 	else:
-		print("Debug - Error while connecting")
+		#print("Debug - Error while connecting")
 		logger.error(info)
 		sys.exit()
 
@@ -430,53 +437,53 @@ def main():
 
 
 				if not status:
-					print("Debug - ESM query unsucessfull")
+					#print("Debug - ESM query unsucessfull")
 					logger.error(info)
 					raise KeyboardInterrupt
 
 
-				print("Debug - ESM query sucessful")
+				#print("Debug - ESM query sucessful")
 				resultID = info
 				logger.info("ESM queried sucessfully, jobID: %s"%resultID)
 
 				status = False
 				while not status:
-					print("Debug - Waiting 10 seconds before to check if the resultId is ready")
+					#print("Debug - Waiting 10 seconds before to check if the resultId is ready")
 					time.sleep(10)
 					status, info = esm.query_status(resultID)
 					if status == 0:
-						print("Debug - Query status error")
+						#print("Debug - Query status error")
 						logger.error(info)
 						raise KeyboardInterrupt
 					elif status == 2:
-						print("Debug - Query status not yet ready")
+						#print("Debug - Query status not yet ready")
 						logger.info(info)
 						continue
 					else: # Query status is == 1 so is finished and complete
-						print("Debug - Query status ready")
+						#print("Debug - Query status ready")
 						logger.info(info)
 
 				status, info = esm.get_query_results(resultID)
 				if status == 0:
-					print("Debug - get query results error")
+					#print("Debug - get query results error")
 					logger.error(info)
 					raise KeyboardInterrupt
 
-				print("Debug - Get query results for jobID %s sucessfull"%resultID)
+				#print("Debug - Get query results for jobID %s sucessfull"%resultID)
 				logger.info("Get query results for jobID %s sucessfull"%resultID)
 				dataframe = info
 
 				if len(dataframe) == 0:
 					# empty dataframe
-					print("Debug - No new events to be written")
+					#print("Debug - No new events to be written")
 					logger.info("No new events to be written")
 				else:
 					# Creamos una nueva columna en el dataframe mezclando los valores Alert.IPSID y AlertID.
 					dataframe["Identificator"] = dataframe["Alert.IPSID"] + "|" + dataframe["Alert.AlertID"]
 					# El comando ~dataframe.Identificator.isin(processed_correlatedID) genera un boolean dataframe 
 					# poniendo a True todo lo que no esta en la lista processed_correlatedID y a False lo que esta
-					# en la lista. Si se le quita el caracter ~ pondrá a True todo lo que está en la lista y a 
-					# False todo lo que no está
+					# en la lista. Si se le quita el caracter ~ pondra a True todo lo que esta en la lista y a 
+					# False todo lo que no esta
 					dataframe = dataframe[~dataframe.Identificator.isin(processed_correlatedID)]
 
 					filename = Utils.get_output_file()
@@ -484,7 +491,7 @@ def main():
 
 					for index, row in dataframe.iterrows():						
 						correlated_event_ID = row["Identificator"]
-						print("Debug - Writting event: %s in %s"%(correlated_event_ID, filename))
+						#print("Debug - Writting event: %s in %s"%(correlated_event_ID, filename))
 						logger.info("Writting event: %s in %s"%(correlated_event_ID, filename))
 
 						processed_correlatedID.append(correlated_event_ID)
@@ -511,10 +518,10 @@ def main():
 				status, info = esm.keepAlive()				
 
 				if status:
-					print("Debug - Heartbeat Sucessful")
+					#print("Debug - Heartbeat Sucessful")
 					logger.info(info)
 				else:
-					print("Debug - Heartbeat unsucessfull")
+					#print("Debug - Heartbeat unsucessfull")
 					logger.error(info)
 					raise KeyboardInterrupt
 
@@ -523,10 +530,10 @@ def main():
 		logger.info('Keyboard interrupt received. Disconnecting from SIEM')
 		status, info = esm.disconnect()
 		if status:
-			print("Debug - Disconnection sucessful")
+			#print("Debug - Disconnection sucessful")
 			logger.info(info)
 		else:
-			print("Debug - Error while disconnecting")
+			#print("Debug - Error while disconnecting")
 			logger.error(info)
 
 if __name__ == "__main__":
