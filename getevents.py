@@ -505,7 +505,7 @@ def main():
 							       'GeoLoc_ASNGeoSrc.Msg']
 						string = ""
 						for field in fields:
-							string = string + row[field] + ","
+							string = string + row[field] + ";"
 
 						string = string[:-1] + "\n"
 						f.write(string)
