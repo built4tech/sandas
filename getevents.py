@@ -171,10 +171,11 @@ class McAfee_SIEM():
 
 
 		if filters:
-		    list_of_filters.append({"type": "EsmFieldFilter","field": {"name": filters['field']}, 
-		                            "operator": filters['operator'], 
-		                            "values":[{"type": "EsmBasicValue", "value": filters['values']}]
-		                          })
+			for filter in filters:
+				list_of_filters.append({"type": "EsmFieldFilter","field": {"name": filter['field']}, 
+		                                "operator": filter['operator'], 
+		                                "values":[{"type": "EsmBasicValue", "value": filter['values']}]
+		                              })
 		else:
 		    list_of_filters = []
 
@@ -426,7 +427,9 @@ def main():
 				#  - Correlation Enfine --> 47
 				#  - McAfee Advanced Correlation engine --> 335
 				#  - Ace Risk Manager --> 335
-				filters = {'field':'DSID', 'operator': 'IN', 'values':'47, 380, 335, 345'} 
+				filters = [{'field':'DSID', 'operator': 'IN', 'values':'47, 380, 335, 345'}, 
+						   {'field': 'AvgSeverity', 'operator': 'GREATER_OR_EQUALS_THAN', 'values':'50'}
+						  ]
 
 				fields  = ['FirstTime','LastTime','ThirdPartyType.Name','DSID','IPSID','AlertID',\
 		          		   'Rule_NDSNormSigID.msg','Rule.msg','Rule_Name','Action.Name','EventCount','Severity','AvgSeverity',\
